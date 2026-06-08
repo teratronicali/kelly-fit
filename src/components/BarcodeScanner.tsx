@@ -26,14 +26,18 @@ export default function BarcodeScanner({ onClose, onEncontrado, onBuscarPorNombr
     let controls: { stop: () => void } | undefined
 
     reader
-      .decodeFromVideoDevice(undefined, videoRef.current ?? undefined, async (result, _err, ctrl) => {
-        controls = ctrl
-        if (!result || !activo) return
-        activo = false
-        ctrl.stop()
-        setEstado('buscando')
-        await buscarProducto(result.getText())
-      })
+      .decodeFromConstraints(
+        { video: { facingMode: { ideal: 'environment' } } },
+        videoRef.current ?? undefined,
+        async (result, _err, ctrl) => {
+          controls = ctrl
+          if (!result || !activo) return
+          activo = false
+          ctrl.stop()
+          setEstado('buscando')
+          await buscarProducto(result.getText())
+        }
+      )
       .catch(() => {
         setEstado('error')
         setMensaje('No se pudo acceder a la cámara. Revisa los permisos del navegador.')
