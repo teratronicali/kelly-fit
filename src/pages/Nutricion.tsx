@@ -126,6 +126,7 @@ export default function Nutricion() {
           onClose={() => setScanner(false)}
           onEncontrado={(a) => handleEncontrado(a, 'escaneo')}
           onBuscarPorNombre={() => { setScanner(false); setBuscador(true) }}
+          onAgregarManual={() => { setScanner(false); setPrellenado(null); setModal('snack') }}
         />
       )}
       {buscador && (

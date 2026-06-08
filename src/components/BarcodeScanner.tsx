@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { BrowserMultiFormatReader } from '@zxing/browser'
-import { X, Loader2, ScanBarcode, Search } from 'lucide-react'
+import { X, Loader2, ScanBarcode, Search, Pencil } from 'lucide-react'
 import type { Alimento } from '../types'
 
 interface Props {
   onClose: () => void
   onEncontrado: (alimento: Alimento) => void
   onBuscarPorNombre: () => void
+  onAgregarManual: () => void
 }
 
 interface ProductoOFF {
@@ -15,7 +16,7 @@ interface ProductoOFF {
   serving_size?: string
 }
 
-export default function BarcodeScanner({ onClose, onEncontrado, onBuscarPorNombre }: Props) {
+export default function BarcodeScanner({ onClose, onEncontrado, onBuscarPorNombre, onAgregarManual }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [estado, setEstado] = useState<'leyendo' | 'buscando' | 'error'>('leyendo')
   const [mensaje, setMensaje] = useState('Apunta la cámara al código de barras del producto')
@@ -57,7 +58,7 @@ export default function BarcodeScanner({ onClose, onEncontrado, onBuscarPorNombr
       const producto: ProductoOFF | undefined = data?.product
       if (data?.status !== 1 || !producto) {
         setEstado('error')
-        setMensaje('No encontramos este producto en la base de datos. Puedes agregarlo manualmente.')
+        setMensaje('Leímos el código, pero este producto no está en la base de datos internacional (pasa seguido con marcas locales). Búscalo por nombre o regístralo a mano con los datos del empaque.')
         return
       }
       const n = producto.nutriments ?? {}
@@ -100,13 +101,21 @@ export default function BarcodeScanner({ onClose, onEncontrado, onBuscarPorNombr
           <div className="space-y-3">
             <p className="text-center text-white/70 text-xs leading-relaxed">{mensaje}</p>
             {estado === 'error' && (
-              <button
-                onClick={onBuscarPorNombre}
-                className="w-full flex items-center justify-center gap-1.5 text-xs font-medium text-white py-2.5 rounded-lg"
-                style={{ background: 'var(--rosa-fuerte)' }}
-              >
-                <Search size={14} /> Buscar el alimento por nombre
-              </button>
+              <div className="space-y-2">
+                <button
+                  onClick={onBuscarPorNombre}
+                  className="w-full flex items-center justify-center gap-1.5 text-xs font-medium text-white py-2.5 rounded-lg"
+                  style={{ background: 'var(--rosa-fuerte)' }}
+                >
+                  <Search size={14} /> Buscar el alimento por nombre
+                </button>
+                <button
+                  onClick={onAgregarManual}
+                  className="w-full flex items-center justify-center gap-1.5 text-xs font-medium text-white/90 py-2.5 rounded-lg border border-white/30"
+                >
+                  <Pencil size={14} /> Registrarlo a mano con los datos del empaque
+                </button>
+              </div>
             )}
           </div>
         )}
