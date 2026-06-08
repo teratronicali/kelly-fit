@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { Plus, X, Trash2, ScanBarcode, Coffee, Soup, Moon, Cookie } from 'lucide-react'
+import { Plus, X, Trash2, ScanBarcode, Search, Coffee, Soup, Moon, Cookie } from 'lucide-react'
 import toast, { Toaster } from 'react-hot-toast'
 import PageHeader from '../components/PageHeader'
 import BarcodeScanner from '../components/BarcodeScanner'
+import BuscarAlimento from '../components/BuscarAlimento'
 import { useNutricion } from '../lib/useNutricion'
 import { GRUPOS_ALIMENTO_RAPIDO } from '../data/contenido'
 import type { Alimento, ComidaRegistrada } from '../types'
@@ -29,13 +30,15 @@ export default function Nutricion() {
   const { meta, comidasHoy, totalesHoy, agregarComida, eliminarComida } = useNutricion()
   const [modal, setModal] = useState<ComidaRegistrada['tipo'] | null>(null)
   const [scanner, setScanner] = useState(false)
+  const [buscador, setBuscador] = useState(false)
   const [prellenado, setPrellenado] = useState<Alimento | null>(null)
 
-  function handleEscaneado(alimento: Alimento) {
+  function handleEncontrado(alimento: Alimento, origen: 'escaneo' | 'búsqueda') {
     setScanner(false)
+    setBuscador(false)
     setPrellenado(alimento)
     setModal('snack')
-    toast.success(`Encontramos: ${alimento.nombre}`)
+    toast.success(origen === 'escaneo' ? `Encontramos: ${alimento.nombre}` : `Agregado: ${alimento.nombre}`)
   }
 
   return (
@@ -45,9 +48,14 @@ export default function Nutricion() {
         titulo="Nutrición"
         subtitulo="Registra tus comidas y controla tus macros"
         accion={
-          <button onClick={() => setScanner(true)} className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-xl text-white font-medium" style={{ background: ROSA_FUERTE }}>
-            <ScanBarcode size={14} /> Escanear
-          </button>
+          <div className="flex items-center gap-1.5">
+            <button onClick={() => setBuscador(true)} className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-xl text-[var(--rosa-fuerte)] bg-white border border-pink-200 font-medium">
+              <Search size={14} /> Buscar
+            </button>
+            <button onClick={() => setScanner(true)} className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-xl text-white font-medium" style={{ background: ROSA_FUERTE }}>
+              <ScanBarcode size={14} /> Escanear
+            </button>
+          </div>
         }
       />
 
@@ -113,7 +121,19 @@ export default function Nutricion() {
         })}
       </div>
 
-      {scanner && <BarcodeScanner onClose={() => setScanner(false)} onEncontrado={handleEscaneado} />}
+      {scanner && (
+        <BarcodeScanner
+          onClose={() => setScanner(false)}
+          onEncontrado={(a) => handleEncontrado(a, 'escaneo')}
+          onBuscarPorNombre={() => { setScanner(false); setBuscador(true) }}
+        />
+      )}
+      {buscador && (
+        <BuscarAlimento
+          onClose={() => setBuscador(false)}
+          onSeleccionar={(a) => handleEncontrado(a, 'búsqueda')}
+        />
+      )}
       {modal && (
         <ModalComida
           tipo={modal}

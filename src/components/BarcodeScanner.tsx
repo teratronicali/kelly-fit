@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { BrowserMultiFormatReader } from '@zxing/browser'
-import { X, Loader2, ScanBarcode } from 'lucide-react'
+import { X, Loader2, ScanBarcode, Search } from 'lucide-react'
 import type { Alimento } from '../types'
 
 interface Props {
   onClose: () => void
   onEncontrado: (alimento: Alimento) => void
+  onBuscarPorNombre: () => void
 }
 
 interface ProductoOFF {
@@ -14,7 +15,7 @@ interface ProductoOFF {
   serving_size?: string
 }
 
-export default function BarcodeScanner({ onClose, onEncontrado }: Props) {
+export default function BarcodeScanner({ onClose, onEncontrado, onBuscarPorNombre }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [estado, setEstado] = useState<'leyendo' | 'buscando' | 'error'>('leyendo')
   const [mensaje, setMensaje] = useState('Apunta la cámara al código de barras del producto')
@@ -92,7 +93,18 @@ export default function BarcodeScanner({ onClose, onEncontrado }: Props) {
             <Loader2 size={16} className="animate-spin" /> Buscando información nutricional…
           </div>
         ) : (
-          <p className="text-center text-white/70 text-xs leading-relaxed">{mensaje}</p>
+          <div className="space-y-3">
+            <p className="text-center text-white/70 text-xs leading-relaxed">{mensaje}</p>
+            {estado === 'error' && (
+              <button
+                onClick={onBuscarPorNombre}
+                className="w-full flex items-center justify-center gap-1.5 text-xs font-medium text-white py-2.5 rounded-lg"
+                style={{ background: 'var(--rosa-fuerte)' }}
+              >
+                <Search size={14} /> Buscar el alimento por nombre
+              </button>
+            )}
+          </div>
         )}
       </div>
     </div>
