@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Check } from 'lucide-react'
+import { ArrowLeft, Check, LogOut } from 'lucide-react'
 import toast, { Toaster } from 'react-hot-toast'
 import { usePerfil } from '../lib/usePerfil'
 import { useNutricion } from '../lib/useNutricion'
+import { useAuth } from '../lib/AuthContext'
 
 const ROSA_FUERTE = '#e0367a'
 
@@ -11,6 +12,7 @@ export default function Perfil() {
   const navigate = useNavigate()
   const { perfil, setPerfil } = usePerfil()
   const { meta, setMeta } = useNutricion()
+  const { signOut, user } = useAuth()
 
   const [form, setForm] = useState({
     nombre: perfil.nombre,
@@ -98,6 +100,18 @@ export default function Perfil() {
         >
           <Check size={16} /> Guardar cambios
         </button>
+
+        {/* Cuenta */}
+        <div className="rounded-2xl bg-white border border-pink-100 p-4">
+          <p className="text-xs font-medium text-gray-500 mb-1">Cuenta</p>
+          <p className="text-xs text-gray-400 mb-3">{user?.email}</p>
+          <button
+            onClick={async () => { await signOut(); navigate('/') }}
+            className="w-full flex items-center justify-center gap-2 text-sm font-medium text-red-500 py-2.5 rounded-xl border border-red-100 bg-red-50 active:scale-[0.98] transition-transform"
+          >
+            <LogOut size={15} /> Cerrar sesión
+          </button>
+        </div>
       </div>
     </div>
   )

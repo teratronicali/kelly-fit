@@ -1,6 +1,8 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { differenceInCalendarWeeks, format, parseISO } from 'date-fns'
 import { useStored } from './storage'
+import { supabase } from './supabase'
+import { useAuth } from './AuthContext'
 import { PROGRAMA, TOTAL_SEMANAS } from '../data/programa'
 import type { DiaSemana, SesionEntreno } from '../types'
 
@@ -17,8 +19,28 @@ const NOMBRES_DIA: Record<number, DiaSemana | null> = {
 }
 
 export function useEntrenos() {
+  const { user } = useAuth()
   const [fechaInicio, setFechaInicio] = useStored<string>('fechaInicio', format(new Date(), 'yyyy-MM-dd'))
   const [sesiones, setSesiones] = useStored<SesionEntreno[]>('sesiones', [])
+
+  // Al autenticarse: cargar sesiones desde Supabase
+  useEffect(() => {
+    if (!user) return
+    supabase.from('kf_sesiones').select('*').eq('user_id', user.id)
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          setSesiones(data.map(row => ({
+            id: row.id,
+            fecha: row.fecha,
+            dia: row.dia as DiaSemana,
+            semana: row.semana,
+            completado: row.completado,
+            ejercicios: row.ejercicios ?? [],
+          })))
+        }
+      })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id])
 
   const semanaActual = useMemo(() => {
     const semanas = differenceInCalendarWeeks(new Date(), parseISO(fechaInicio), { weekStartsOn: 1 }) + 1
@@ -48,7 +70,8 @@ export function useEntrenos() {
     return nueva
   }
 
-  function guardarSesion(sesion: SesionEntreno) {
+  async function guardarSesion(sesion: SesionEntreno) {
+    // Actualización local inmediata
     setSesiones(prev => {
       const idx = prev.findIndex(s => s.id === sesion.id)
       if (idx === -1) return [...prev, sesion]
@@ -56,6 +79,19 @@ export function useEntrenos() {
       copia[idx] = sesion
       return copia
     })
+    // Sincronizar con Supabase
+    if (user) {
+      await supabase.from('kf_sesiones').upsert({
+        id: sesion.id,
+        user_id: user.id,
+        fecha: sesion.fecha,
+        dia: sesion.dia,
+        semana: sesion.semana,
+        completado: sesion.completado,
+        ejercicios: sesion.ejercicios,
+        updated_at: new Date().toISOString(),
+      })
+    }
   }
 
   const racha = useMemo(() => {
