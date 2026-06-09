@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { format, parseISO } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -19,13 +19,25 @@ export default function DiaEntreno() {
   const hoy = format(new Date(), 'yyyy-MM-dd')
 
   const [sesion, setSesion] = useState<SesionEntreno | null>(null)
+  const cargadoRef = useRef(false)
 
   useEffect(() => {
     if (!diaTyped) return
     const existente = sesiones.find(s => s.fecha === hoy && s.dia === diaTyped)
+    cargadoRef.current = false
     setSesion(existente ?? obtenerOCrearSesion(hoy, diaTyped, semanaActual))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [diaTyped, hoy])
+
+  // Auto-guardado: cada vez que el usuario modifica la sesión se guarda
+  // automáticamente sin necesidad de pulsar "Guardar progreso"
+  useEffect(() => {
+    if (!cargadoRef.current) { cargadoRef.current = true; return }
+    if (!sesion) return
+    const t = setTimeout(() => guardarSesion(sesion), 500)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sesion])
 
   const historial = sesiones
     .filter(s => s.dia === diaTyped && s.fecha !== hoy && s.completado)
